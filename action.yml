@@ -1,6 +1,6 @@
 name: 'Run swiftlint with reviewdog'
 description: '🐶 Run swiftlint with reviewdog on pull requests to improve code review experience.'
-author: 'ittybittyapps'
+author: 'Itty Bitty Apps Pty Ltd'
 inputs:
   github_token:
     description: 'GITHUB_TOKEN'
