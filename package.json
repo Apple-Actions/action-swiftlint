@@ -36,15 +36,15 @@
     "@actions/tool-cache": "~2.0.2"
   },
   "devDependencies": {
-    "@types/node": "~24.19.1",
-    "esbuild": "~0.28.0",
-    "eslint": "~10.12.0",
+    "@types/node": "~24.19.2",
+    "esbuild": "~0.28.2",
+    "eslint": "~10.13.0",
     "eslint-plugin-github": "~6.1.2",
-    "knip": "~6.40.0",
-    "prettier": "~3.9.0",
-    "typescript": "~6.0.0",
+    "knip": "~6.42.1",
+    "prettier": "~3.9.10",
+    "typescript": "~7.0.2",
     "vite": "~8.3.3",
-    "vitest": "~5.0.2"
+    "vitest": "~5.0.5"
   },
-  "packageManager": "yarn@4.14.1"
+  "packageManager": "yarn@4.18.0"
 }
