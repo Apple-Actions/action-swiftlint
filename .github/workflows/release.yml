@@ -1,0 +1,151 @@
+# Human-triggered release: tag package.json version, move major tag, GitHub
+# Release, then minor-bump package.json on the default branch for the next queue.
+# The bump lands via a short-lived release-queue/* branch so required status
+# checks attach to the commit before it is pushed to the protected default branch.
+#
+# Actions → Release → Run workflow (must select the default branch).
+name: Release
+
+run-name: Release ${{ github.ref_name }}
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Tag release and queue next minor
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+
+          if [ "${GITHUB_REF_NAME}" != "${DEFAULT_BRANCH}" ]; then
+            echo "::error::Release only from ${DEFAULT_BRANCH}, got ${GITHUB_REF_NAME}"
+            exit 1
+          fi
+
+          git fetch --tags origin
+
+          version="$(node -e '
+            const fs = require("node:fs");
+            const text = fs.readFileSync("package.json", "utf8");
+            const match = text.match(/"version":\s*"(\d+)\.(\d+)\.(\d+)"/);
+            if (!match) {
+              console.error("package.json version must be semver X.Y.Z");
+              process.exit(1);
+            }
+            process.stdout.write(match[1] + "." + match[2] + "." + match[3]);
+          ')"
+          tag="v${version}"
+          major="${version%%.*}"
+          minor_patch="${version#*.}"
+          minor="${minor_patch%%.*}"
+          next="${major}.$((minor + 1)).0"
+          remote="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "::error::Tag ${tag} already exists"
+            exit 1
+          fi
+
+          echo "Releasing ${tag} at ${GITHUB_SHA}; next queue ${next}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git tag "${tag}" "${GITHUB_SHA}"
+          git push "${remote}" "refs/tags/${tag}"
+
+          git tag -f "v${major}" "${GITHUB_SHA}"
+          git push "${remote}" "refs/tags/v${major}" --force
+
+          gh release create "${tag}" --title "${tag}" --generate-notes --target "${GITHUB_SHA}"
+
+          NEXT="${next}" node -e '
+            const fs = require("node:fs");
+            const next = process.env.NEXT;
+            let text = fs.readFileSync("package.json", "utf8");
+            if (!/"version":\s*"\d+\.\d+\.\d+"/.test(text)) {
+              console.error("package.json version field not found");
+              process.exit(1);
+            }
+            text = text.replace(/"version":\s*"\d+\.\d+\.\d+"/, "\"version\": \"" + next + "\"");
+            fs.writeFileSync("package.json", text);
+          '
+
+          git add package.json
+          git commit -m "Bump version to ${next} for next release"
+          bump_sha="$(git rev-parse HEAD)"
+          queue_branch="release-queue/${next}"
+
+          # Push to a temp branch so required status checks attach to bump_sha,
+          # then push that same SHA to main (protection rejects unchecked SHAs).
+          git push "${remote}" "HEAD:refs/heads/${queue_branch}"
+
+          required_checks="knip check-dist eslint prettier test actionlint zizmor"
+          deadline=$((SECONDS + 1800))
+          while true; do
+            if [ "${SECONDS}" -ge "${deadline}" ]; then
+              echo "::error::Timed out waiting for required checks on ${bump_sha}"
+              exit 1
+            fi
+
+            # One JSON object: check name -> latest conclusion ("" if still running).
+            status_json="$(
+              gh api "repos/${GITHUB_REPOSITORY}/commits/${bump_sha}/check-runs?per_page=100" \
+                --jq '
+                  [.check_runs[] | {name, conclusion, started_at}]
+                  | group_by(.name)
+                  | map(sort_by(.started_at) | last)
+                  | map({key: .name, value: (.conclusion // "")})
+                  | from_entries
+                '
+            )"
+
+            all_ok=true
+            for name in ${required_checks}; do
+              conclusion="$(
+                STATUS_JSON="${status_json}" NAME="${name}" node -e '
+                  const data = JSON.parse(process.env.STATUS_JSON);
+                  process.stdout.write(data[process.env.NAME] ?? "");
+                '
+              )"
+              if [ -z "${conclusion}" ]; then
+                echo "Waiting for check: ${name}"
+                all_ok=false
+                continue
+              fi
+              case "${conclusion}" in
+                success|neutral|skipped) ;;
+                failure|cancelled|timed_out|action_required|startup_failure|stale)
+                  echo "::error::Required check ${name} concluded ${conclusion}"
+                  exit 1
+                  ;;
+                *)
+                  echo "Check ${name} still ${conclusion}"
+                  all_ok=false
+                  ;;
+              esac
+            done
+
+            if [ "${all_ok}" = true ]; then
+              echo "All required checks passed on ${bump_sha}"
+              break
+            fi
+            sleep 15
+          done
+
+          git push "${remote}" "${bump_sha}:refs/heads/${DEFAULT_BRANCH}"
+          git push "${remote}" --delete "refs/heads/${queue_branch}"

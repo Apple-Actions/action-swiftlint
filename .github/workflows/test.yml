@@ -1,0 +1,83 @@
+name: test
+
+run-name: test
+
+on:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Enable corepack (workaround)
+        run: corepack enable
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: test
+        run: yarn test
+
+  validate-inputs:
+    name: validate-inputs
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: package.json
+
+      - name: Reject a missing version-file
+        run: |
+          set +e
+          output=$(env \
+            'INPUT_VERSION-FILE=.missing-swiftlint-version' \
+            'INPUT_STRICT=true' \
+            'INPUT_REPORTER=github-actions-logging' \
+            node dist/index.js)
+          code=$?
+          set -e
+          echo "${output//::/: :}"
+          test "$code" -ne 0 || { echo "::error::Expected a non-zero exit code"; exit 1; }
+          echo "$output" | grep -qF '::error::version-file not found: .missing-swiftlint-version' \
+            || { echo "::error::Expected a missing version-file failure message"; exit 1; }
+
+  smoke:
+    name: smoke
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run action against a fixture Swift file
+        uses: ./
+        with:
+          version: 0.65.1
+          path: tests/fixtures

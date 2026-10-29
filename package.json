@@ -1,0 +1,50 @@
+{
+  "name": "action-swiftlint",
+  "version": "1.0.0",
+  "description": "GitHub Action to install a pinned SwiftLint and lint with GitHub Actions annotations.",
+  "type": "module",
+  "main": "src/main.ts",
+  "engines": {
+    "node": "24"
+  },
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --platform=node --target=node24 --format=esm --outfile=dist/index.js --banner:js=\"import{createRequire}from'node:module';const require=createRequire(import.meta.url);\"",
+    "format": "prettier --write src/",
+    "format:check": "prettier --check src/",
+    "knip": "knip",
+    "lint": "eslint",
+    "test": "vitest run",
+    "type:check": "tsc --noEmit",
+    "all": "yarn format && yarn knip && yarn lint && yarn type:check && yarn test && yarn build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Apple-Actions/action-swiftlint.git"
+  },
+  "keywords": [
+    "actions",
+    "apple",
+    "swift",
+    "swiftlint",
+    "lint"
+  ],
+  "author": "Itty Bitty Apps Pty Ltd",
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "~3.0.0",
+    "@actions/exec": "~3.0.0",
+    "@actions/tool-cache": "~2.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "~24.19.1",
+    "esbuild": "~0.28.0",
+    "eslint": "~10.12.0",
+    "eslint-plugin-github": "~6.1.2",
+    "knip": "~6.40.0",
+    "prettier": "~3.9.0",
+    "typescript": "~6.0.0",
+    "vite": "~8.3.3",
+    "vitest": "~5.0.2"
+  },
+  "packageManager": "yarn@4.14.1"
+}

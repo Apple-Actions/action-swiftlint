@@ -1,19 +1,42 @@
-name: 'Run swiftlint with reviewdog'
-description: '🐶 Run swiftlint with reviewdog on pull requests to improve code review experience.'
+name: 'SwiftLint'
+description: 'Install a pinned SwiftLint and lint with GitHub Actions annotations.'
 author: 'Itty Bitty Apps Pty Ltd'
 inputs:
-  github_token:
-    description: 'GITHUB_TOKEN'
-    default: '${{ github.token }}'
-  level:
-    description: 'Report level for reviewdog [info,warning,error]'
-    default: 'error'
+  version:
+    description: 'SwiftLint version (for example 0.65.1) or latest. Wins over version-file if both are set.'
+    required: false
+  version-file:
+    description: 'Path to a file whose first non-empty, non-# line is the SwiftLint version (for example .swiftlint-version).'
+    required: false
+  strict:
+    description: 'Pass --strict so warnings fail the step.'
+    required: false
+    default: 'true'
+  config:
+    description: 'Path to a SwiftLint configuration file.'
+    required: false
+  path:
+    description: 'Path to lint. Defaults to the repository root (SwiftLint default).'
+    required: false
+  args:
+    description: 'Extra arguments appended to swiftlint lint.'
+    required: false
   reporter:
-    description: 'Reporter of reviewdog command [github-pr-check,github-pr-review].'
-    default: 'github-pr-check'
+    description: 'SwiftLint reporter. github-actions-logging posts annotations on the check.'
+    required: false
+    default: 'github-actions-logging'
+  token:
+    description: 'GitHub token used to resolve latest and download release assets (avoids API rate limits).'
+    required: false
+    default: ${{ github.token }}
+outputs:
+  version:
+    description: 'Resolved SwiftLint version that was installed.'
+  swiftlint-path:
+    description: 'Absolute path to the swiftlint binary.'
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
+  using: 'node24'
+  main: 'dist/index.js'
 branding:
   icon: 'check'
   color: 'blue'
