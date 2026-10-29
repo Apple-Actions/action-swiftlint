@@ -33,7 +33,7 @@
   "dependencies": {
     "@actions/core": "~3.0.0",
     "@actions/exec": "~3.0.0",
-    "@actions/tool-cache": "~2.0.2"
+    "@actions/tool-cache": "~4.0.0"
   },
   "devDependencies": {
     "@types/node": "~24.19.2",
