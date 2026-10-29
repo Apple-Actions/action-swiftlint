@@ -1,6 +1,6 @@
 {
   "name": "swiftlint-action",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "GitHub Action to install a pinned SwiftLint and lint with GitHub Actions annotations.",
   "type": "module",
   "main": "src/main.ts",
