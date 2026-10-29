@@ -35,7 +35,7 @@ export function releaseAssetName({platform, arch}: PlatformArch): string {
 export async function fetchLatestVersion(token: string): Promise<string> {
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github+json',
-    'User-Agent': 'Apple-Actions/action-swiftlint',
+    'User-Agent': 'Apple-Actions/swiftlint',
     'X-GitHub-Api-Version': '2022-11-28'
   }
   if (token) {

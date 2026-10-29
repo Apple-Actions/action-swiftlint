@@ -1,5 +1,5 @@
 {
-  "name": "action-swiftlint",
+  "name": "swiftlint-action",
   "version": "1.1.0",
   "description": "GitHub Action to install a pinned SwiftLint and lint with GitHub Actions annotations.",
   "type": "module",
@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Apple-Actions/action-swiftlint.git"
+    "url": "git+https://github.com/Apple-Actions/swiftlint.git"
   },
   "keywords": [
     "actions",

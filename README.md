@@ -14,7 +14,7 @@ A GitHub Action that installs a pinned [SwiftLint](https://github.com/realm/Swif
 ### Pin a version
 
 ```yaml
-- uses: Apple-Actions/action-swiftlint@v1
+- uses: Apple-Actions/swiftlint@v1
   with:
     version: 0.65.1
 ```
@@ -28,7 +28,7 @@ Put the version on the first non-comment line of a file (for example `.swiftlint
 ```
 
 ```yaml
-- uses: Apple-Actions/action-swiftlint@v1
+- uses: Apple-Actions/swiftlint@v1
   with:
     version-file: .swiftlint-version
 ```
@@ -38,7 +38,7 @@ If both `version` and `version-file` are set, `version` wins. If neither is set,
 ### Options
 
 ```yaml
-- uses: Apple-Actions/action-swiftlint@v1
+- uses: Apple-Actions/swiftlint@v1
   with:
     version: 0.65.1
     strict: true

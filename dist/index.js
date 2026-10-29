@@ -23539,7 +23539,7 @@ function releaseAssetName({ platform: platform2, arch: arch3 }) {
 async function fetchLatestVersion(token) {
   const headers = {
     Accept: "application/vnd.github+json",
-    "User-Agent": "Apple-Actions/action-swiftlint",
+    "User-Agent": "Apple-Actions/swiftlint",
     "X-GitHub-Api-Version": "2022-11-28"
   };
   if (token) {
